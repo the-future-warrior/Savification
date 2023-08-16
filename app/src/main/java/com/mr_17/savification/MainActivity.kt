@@ -1,19 +1,35 @@
 package com.mr_17.savification
 
-import android.app.Application
-import android.content.ComponentName
-import android.content.Intent
+import android.content.*
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
 import android.text.TextUtils
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.room.Room
+import com.mr_17.savification.room.Test
+import com.mr_17.savification.room.TestingDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
     private val ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners"
     private var enableNotificationListenerAlertDialog: AlertDialog? = null
+
+    private lateinit var notificationReceiver: NotificationReceiver
+
+    private val db by lazy {
+        Room.databaseBuilder(
+            applicationContext,
+            TestingDatabase::class.java,
+            "testing.db"
+        ).build()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +40,13 @@ class MainActivity : AppCompatActivity() {
             enableNotificationListenerAlertDialog = buildNotificationServiceAlertDialog();
             enableNotificationListenerAlertDialog?.show();
         }
+
+        // Finally we register a receiver to tell the MainActivity when a notification has been received
+        // Finally we register a receiver to tell the MainActivity when a notification has been received
+        notificationReceiver = NotificationReceiver()
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(packageName)
+        registerReceiver(notificationReceiver, intentFilter)
     }
 
     private fun isNotificationServiceEnabled(): Boolean {
@@ -61,5 +84,20 @@ class MainActivity : AppCompatActivity() {
             finishAndRemoveTask()
         }
         return alertDialogBuilder.create()
+    }
+
+    public class NotificationReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            Log.d("received", intent.getStringExtra("notif")!!)
+            GlobalScope.launch (Dispatchers.Main) {
+                TestingDatabase.getInstance(context!!).testingDao.upsertTest(
+                    Test(
+                        data = intent.getStringExtra(
+                            "notif"
+                        )!!
+                    )
+                )
+            }
+        }
     }
 }
