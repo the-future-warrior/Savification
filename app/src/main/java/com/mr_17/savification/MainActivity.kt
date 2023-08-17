@@ -1,11 +1,15 @@
 package com.mr_17.savification
 
 import android.content.*
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
 import android.text.TextUtils
 import android.util.Log
+import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
@@ -22,14 +26,6 @@ class MainActivity : AppCompatActivity() {
     private var enableNotificationListenerAlertDialog: AlertDialog? = null
 
     private lateinit var notificationReceiver: NotificationReceiver
-
-    private val db by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            TestingDatabase::class.java,
-            "testing.db"
-        ).build()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,16 +83,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     public class NotificationReceiver : BroadcastReceiver() {
+        @RequiresApi(Build.VERSION_CODES.M)
         override fun onReceive(context: Context?, intent: Intent) {
-            Log.d("received", intent.getStringExtra("notif")!!)
+            //Log.d("received", intent.getStringExtra("title")!!)
             GlobalScope.launch (Dispatchers.Main) {
                 TestingDatabase.getInstance(context!!).testingDao.upsertTest(
                     Test(
-                        data = intent.getStringExtra(
-                            "notif"
-                        )!!
+                        id = intent.getIntExtra(Constants.DB_ID, 0),
+                        packageName = intent.getStringExtra(Constants.DB_PACKAGE_NAME),
+                        title = intent.getStringExtra(Constants.DB_TITLE),
+                        text = intent.getStringExtra(Constants.DB_TEXT),
+                        subText = intent.getStringExtra(Constants.DB_SUB_TEXT),
+                        contentText = intent.getStringExtra(Constants.DB_CONTENT_TEXT),
+                        smallIcon = intent.getIntExtra(Constants.DB_SMALL_ICON, 0),
+                        largeIcon = intent.getIntExtra(Constants.DB_LARGE_ICON, 0),
+                        timeStamp = intent.getLongExtra(Constants.DB_TIME_STAMP, 0)
                     )
                 )
+
             }
         }
     }

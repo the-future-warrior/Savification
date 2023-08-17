@@ -18,7 +18,7 @@ abstract class TestingDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): TestingDatabase {
             if (INSTANCE == null) {
-                INSTANCE = Room.databaseBuilder(context, TestingDatabase::class.java, "testing.db").build()
+                INSTANCE = Room.databaseBuilder(context, TestingDatabase::class.java, "new5.db").build()
             }
             return INSTANCE!!
         }
