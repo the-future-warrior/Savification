@@ -12,6 +12,9 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.mr_17.savification.room.Test
 import com.mr_17.savification.room.TestingDatabase
@@ -43,6 +46,25 @@ class MainActivity : AppCompatActivity() {
         val intentFilter = IntentFilter()
         intentFilter.addAction(packageName)
         registerReceiver(notificationReceiver, intentFilter)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        GlobalScope.launch {
+            val notificationList =
+                TestingDatabase.getInstance(applicationContext).testingDao.getAllNotifications()
+            val recyclerView = findViewById<RecyclerView>(R.id.rv_notification_list)
+            recyclerView.apply {
+                layoutManager = LinearLayoutManager(this@MainActivity)
+                adapter = NotificationAdapter().apply {
+                    setData(notificationList)
+                    setContext(context)
+                }
+            }
+            /*for (notification in notificationList){
+                Log.d("names123", createPackageContext(notification.packageName, CONTEXT_IGNORE_SECURITY).applicationInfo.name)
+            }*/
+        }
     }
 
     private fun isNotificationServiceEnabled(): Boolean {
@@ -82,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         return alertDialogBuilder.create()
     }
 
-    public class NotificationReceiver : BroadcastReceiver() {
+    class NotificationReceiver : BroadcastReceiver() {
         @RequiresApi(Build.VERSION_CODES.M)
         override fun onReceive(context: Context?, intent: Intent) {
             //Log.d("received", intent.getStringExtra("title")!!)
